@@ -64,7 +64,32 @@ class Engine {
 
 const canvas = <HTMLCanvasElement>document.getElementById("canvas");
 const engine = new Engine(canvas);
+
+function getCenter(state: State) {
+  return [state.width >> 1, state.height >> 1];
+}
+
+function pendulumPosition(state: State) {
+  return 0;
+}
+
+function draw(state: State, ctx: CanvasRenderingContext2D) {
+  const center = getCenter(state);
+  const ballSize = 10;
+  const rodLength = 75;
+  const ballPosition = [center[0], center[1] + ballSize + rodLength];
+  ctx.beginPath();
+  ctx.fillStyle = "black";
+  ctx.arc(ballPosition[0], ballPosition[1], ballSize, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(center[0], center[1]);
+  ctx.lineTo(ballPosition[0], ballPosition[1]);
+  ctx.stroke();
+}
+
 const loop = (state: State, ctx: CanvasRenderingContext2D) => {
+  draw(state, ctx);
   engine.nextFrame(loop);
 };
 engine.nextFrame(loop);
