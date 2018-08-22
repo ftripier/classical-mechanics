@@ -9,5 +9,8 @@
   },
   "dependencies": {
     "tslint-config-airbnb": "^5.10.0"
+  },
+  "scripts": {
+    "dev": "tsc -w"
   }
 }
