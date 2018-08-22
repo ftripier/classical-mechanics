@@ -43,9 +43,8 @@ class Engine {
     this.queue.push(cb);
   }
 
-  run(time?: number) {
-    if (!time) {
-      time = performance.now();
+  run(time: number) {
+    if (!this.state.startTime) {
       this.state.startTime = time;
     }
     this.state.dt = time - this.state.time;
@@ -69,4 +68,4 @@ const loop = (state: State, ctx: CanvasRenderingContext2D) => {
   engine.nextFrame(loop);
 };
 engine.nextFrame(loop);
-engine.run();
+window.requestAnimationFrame(engine.run.bind(engine));
