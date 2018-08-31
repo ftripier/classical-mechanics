@@ -1,9 +1,14 @@
+interface Map<T> {
+  [key: string]: T;
+}
+
 interface State {
   startTime: number;
   time: number;
   dt: number;
   width: number;
   height: number;
+  system: Map<any>;
 }
 
 class Engine {
@@ -19,7 +24,8 @@ class Engine {
       time: 0,
       dt: 0,
       width: 0,
-      height: 0
+      height: 0,
+      system: {}
     };
 
     const resizeCanvas = () => {
@@ -69,15 +75,16 @@ function getCenter(state: State) {
   return [state.width >> 1, state.height >> 1];
 }
 
-function pendulumPosition(state: State) {
-  return 0;
-}
-
 function draw(state: State, ctx: CanvasRenderingContext2D) {
   const center = getCenter(state);
   const ballSize = 10;
   const rodLength = 75;
-  const ballPosition = [center[0], center[1] + ballSize + rodLength];
+
+  const ballPosition = [
+    Math.cos(state.system.alpha) * (rodLength + ballSize) + center[0],
+    Math.sin(state.system.alpha) * (rodLength + ballSize) + center[1]
+  ];
+  ctx.clearRect(0, 0, state.width, state.height);
   ctx.beginPath();
   ctx.fillStyle = "black";
   ctx.arc(ballPosition[0], ballPosition[1], ballSize, 0, 2 * Math.PI);
@@ -88,7 +95,22 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
   ctx.stroke();
 }
 
+function update(state: State) {
+  if (!state.system.alpha) {
+    state.system.alpha = 0;
+  }
+  const ballMass = 1;
+  const rodLength = 1;
+  const angluarVelocity = Math.PI * (1 / 128);
+
+  state.system.alpha += angluarVelocity;
+  if (state.system.alpha == Math.PI * 2) {
+    state.system.alpha = 0;
+  }
+}
+
 const loop = (state: State, ctx: CanvasRenderingContext2D) => {
+  update(state);
   draw(state, ctx);
   engine.nextFrame(loop);
 };
