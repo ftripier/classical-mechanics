@@ -82,8 +82,10 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
   const rodLength = 75;
 
   const ballPosition = [
-    Math.cos(state.system.alpha) * (rodLength + ballSize) + center[0],
-    Math.sin(state.system.alpha) * (rodLength + ballSize) + center[1]
+    Math.cos(state.system.theta + Math.PI * 0.5) * (rodLength + ballSize) +
+      center[0],
+    Math.sin(state.system.theta + Math.PI * 0.5) * (rodLength + ballSize) +
+      center[1]
   ];
   ctx.clearRect(0, 0, state.width, state.height);
   ctx.beginPath();
@@ -97,16 +99,22 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
 }
 
 function update(state: State) {
-  if (!state.system.alpha) {
-    state.system.alpha = 0;
+  if (state.system.theta == null) {
+    state.system.theta = 0;
+  }
+  if (state.system.angularVelocity == null) {
+    state.system.angularVelocity = Math.PI * (1 / 128);
   }
   const ballMass = 1;
   const rodLength = 1;
-  const angluarVelocity = Math.PI * (1 / 128) * (state.dt / (16 + 2 / 3));
+  const gravity = 0.001;
+  const gravitationalAcceleration = gravity * Math.sin(state.system.theta);
 
-  state.system.alpha += angluarVelocity;
-  if (Math.abs(state.system.alpha - Math.PI * 2) <= EPSILON) {
-    state.system.alpha = 0;
+  state.system.angularVelocity -= gravitationalAcceleration;
+  state.system.theta +=
+    state.system.angularVelocity * (state.dt / (16 + 2 / 3));
+  if (Math.abs(state.system.theta - Math.PI * 2) <= EPSILON) {
+    state.system.theta = 0;
   }
 }
 
