@@ -82,10 +82,8 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
   const rodLength = 75;
 
   const ballPosition = [
-    Math.cos(state.system.theta + Math.PI * 0.5) * (rodLength + ballSize) +
-      center[0],
-    Math.sin(state.system.theta + Math.PI * 0.5) * (rodLength + ballSize) +
-      center[1]
+    Math.sin(state.system.theta) * (rodLength + ballSize) + center[0],
+    Math.cos(state.system.theta) * (rodLength + ballSize) + center[1]
   ];
   ctx.clearRect(0, 0, state.width, state.height);
   ctx.beginPath();
@@ -108,9 +106,9 @@ function update(state: State) {
   const ballMass = 1;
   const rodLength = 1;
   const gravity = 0.001;
-  const gravitationalAcceleration = gravity * Math.sin(state.system.theta);
+  const gravitationalAcceleration = -gravity * Math.sin(state.system.theta);
 
-  state.system.angularVelocity -= gravitationalAcceleration;
+  state.system.angularVelocity += gravitationalAcceleration;
   state.system.theta +=
     state.system.angularVelocity * (state.dt / (16 + 2 / 3));
   if (Math.abs(state.system.theta - Math.PI * 2) <= EPSILON) {
