@@ -70,6 +70,7 @@ class Engine {
 
 const canvas = <HTMLCanvasElement>document.getElementById("canvas");
 const engine = new Engine(canvas);
+const EPSILON = 1e-4;
 
 function getCenter(state: State) {
   return [state.width >> 1, state.height >> 1];
@@ -101,10 +102,10 @@ function update(state: State) {
   }
   const ballMass = 1;
   const rodLength = 1;
-  const angluarVelocity = Math.PI * (1 / 128);
+  const angluarVelocity = Math.PI * (1 / 128) * (state.dt / (16 + 2 / 3));
 
   state.system.alpha += angluarVelocity;
-  if (state.system.alpha == Math.PI * 2) {
+  if (Math.abs(state.system.alpha - Math.PI * 2) <= EPSILON) {
     state.system.alpha = 0;
   }
 }
