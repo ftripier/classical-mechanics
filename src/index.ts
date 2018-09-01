@@ -99,26 +99,17 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
 const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 128);
 const INITIAL_THETA = 0;
 
-function update(state: State) {
-  if (state.system.theta == null) {
-    state.system.theta = INITIAL_THETA;
-  }
-  if (state.system.angularVelocity == null) {
-    state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
-  }
+function evolveSystem(state: State, dt: number) {
   const gravity = 0.001;
   const mass = 1;
   const gravitationalAcceleration = -gravity * Math.sin(state.system.theta);
 
-  const normalizedDt = state.dt / (16 + 2 / 3);
   const oldTheta = state.system.theta;
   const oldAngularVelocity = state.system.angularVelocity;
-  let newTheta = oldTheta + oldAngularVelocity * normalizedDt;
-  let newAngularVelocity =
-    oldAngularVelocity + gravitationalAcceleration * normalizedDt;
+  let newTheta = oldTheta + oldAngularVelocity * dt;
+  let newAngularVelocity = oldAngularVelocity + gravitationalAcceleration * dt;
 
-  // because of floating point error and because we don't evolve the system at fixed timesteps,
-  // the energy of the system rises over time.
+  // because of floating point error, the energy of the system rises over time.
   // This corrects for these errors.
   const potentialEnergy = (gravity: number, mass: number, theta: number) =>
     -gravity * mass * Math.cos(theta);
@@ -142,6 +133,23 @@ function update(state: State) {
 
   while (state.system.theta - Math.PI * 2 > 0) {
     state.system.theta -= Math.PI * 2;
+  }
+}
+
+function update(state: State) {
+  if (state.system.theta == null) {
+    state.system.theta = INITIAL_THETA;
+  }
+  if (state.system.angularVelocity == null) {
+    state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
+  }
+
+  let dt = state.dt;
+  while (dt > 0) {
+    const expectedFrameTime = 16 + 2 / 3;
+    const normalizedDt = Math.max(dt, expectedFrameTime) / expectedFrameTime;
+    evolveSystem(state, normalizedDt);
+    dt -= expectedFrameTime;
   }
 }
 
