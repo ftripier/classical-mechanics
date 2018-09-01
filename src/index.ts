@@ -96,23 +96,51 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
   ctx.stroke();
 }
 
+const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 128);
+const INITIAL_THETA = 0;
+
 function update(state: State) {
   if (state.system.theta == null) {
-    state.system.theta = 0;
+    state.system.theta = INITIAL_THETA;
   }
   if (state.system.angularVelocity == null) {
-    state.system.angularVelocity = Math.PI * (1 / 128);
+    state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
   }
-  const ballMass = 1;
-  const rodLength = 1;
   const gravity = 0.001;
+  const mass = 1;
   const gravitationalAcceleration = -gravity * Math.sin(state.system.theta);
 
-  state.system.angularVelocity += gravitationalAcceleration;
-  state.system.theta +=
-    state.system.angularVelocity * (state.dt / (16 + 2 / 3));
-  if (Math.abs(state.system.theta - Math.PI * 2) <= EPSILON) {
-    state.system.theta = 0;
+  const normalizedDt = state.dt / (16 + 2 / 3);
+  const oldTheta = state.system.theta;
+  const oldAngularVelocity = state.system.angularVelocity;
+  let newTheta = oldTheta + oldAngularVelocity * normalizedDt;
+  let newAngularVelocity =
+    oldAngularVelocity + gravitationalAcceleration * normalizedDt;
+
+  // because of floating point error, the energy of the system rises over time.
+  // this hopefully to corrects that over time.
+  const potentialEnergy = (gravity: number, mass: number, theta: number) =>
+    -gravity * mass * Math.cos(theta);
+  const kineticEnergy = (mass: number, angularVelocity: number) =>
+    (mass * angularVelocity ** 2) / 2;
+  const currentEnergy = kineticEnergy(mass, newAngularVelocity);
+  const initialEnergy = kineticEnergy(mass, INITIAL_ANGULAR_VELOCITY);
+
+  // because the position is circular, we choose to correct for
+  // error by modifying the angular velocity, and so we only consider the
+  // partial derivative of energy with respect to velocity.
+  const energyDiff = currentEnergy - initialEnergy;
+  if (energyDiff > EPSILON) {
+    const velocityPartial = newAngularVelocity;
+    const adjustment = energyDiff / velocityPartial;
+    newAngularVelocity -= adjustment;
+  }
+
+  state.system.angularVelocity = newAngularVelocity;
+  state.system.theta = newTheta;
+
+  while (state.system.theta - Math.PI * 2 > 0) {
+    state.system.theta -= Math.PI * 2;
   }
 }
 
