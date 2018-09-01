@@ -117,8 +117,9 @@ function update(state: State) {
   let newAngularVelocity =
     oldAngularVelocity + gravitationalAcceleration * normalizedDt;
 
-  // because of floating point error, the energy of the system rises over time.
-  // this hopefully to corrects that over time.
+  // because of floating point error and because we don't evolve the system at fixed timesteps,
+  // the energy of the system rises over time.
+  // This corrects for these errors.
   const potentialEnergy = (gravity: number, mass: number, theta: number) =>
     -gravity * mass * Math.cos(theta);
   const kineticEnergy = (mass: number, angularVelocity: number) =>
