@@ -100,43 +100,46 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
 
 const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 2);
 const INITIAL_THETA = 0;
+const INITIAL_ENERGY = 0.23370055013616975;
+const INITIAL_GRAVITY = 1;
+
+function correctEnergy(state: State) {
+  const gravity = state.system.gravity;
+  const mass = 1;
+
+  const kineticEnergy = (mass: number, angularVelocity: number) =>
+    (mass * angularVelocity ** 2) / 2;
+  const potentialEnergy = (gravity: number, mass: number, theta: number) =>
+    -gravity * mass * Math.cos(theta);
+  const currentEnergy =
+    kineticEnergy(mass, state.system.angularVelocity) +
+    potentialEnergy(gravity, mass, state.system.theta);
+
+  // the only degree of freedom in the hamiltonian is the angular velocity
+  // so we only consider the partial derivative with respect to angular velocity
+  const energyDifference = currentEnergy - state.system.energy;
+  if (Math.abs(energyDifference) > EPSILON) {
+    const velocityPartial = state.system.angularVelocity;
+    const adjustment = Math.abs(energyDifference / velocityPartial);
+    const sign = state.system.angularVelocity > 0 ? -1 : 1;
+    state.system.angularVelocity += sign * adjustment;
+  }
+}
 
 function evolveSystem(state: State, dt: number) {
   const gravity = state.system.gravity;
-  const mass = 1;
+
   const gravitationalAcceleration = -gravity * Math.sin(state.system.theta);
 
-  const oldTheta = state.system.theta;
-  const oldAngularVelocity = state.system.angularVelocity;
-  let newTheta = oldTheta + oldAngularVelocity * (dt / 1000);
-  let newAngularVelocity =
-    oldAngularVelocity + gravitationalAcceleration * (dt / 1000);
+  state.system.theta += state.system.angularVelocity * (dt / 1000);
+  state.system.angularVelocity += gravitationalAcceleration * (dt / 1000);
+  // floating point errors in will compound and gradually add energy to the
+  // system unless we correct for it
+  correctEnergy(state);
 
-  // because of floating point error, the energy of the system rises over time.
-  // This corrects for these errors.
-  const potentialEnergy = (gravity: number, mass: number, theta: number) =>
-    -gravity * mass * Math.cos(theta);
-  const kineticEnergy = (mass: number, angularVelocity: number) =>
-    (mass * angularVelocity ** 2) / 2;
-
-  const currentEnergy = kineticEnergy(mass, newAngularVelocity);
-  const initialEnergy = kineticEnergy(mass, INITIAL_ANGULAR_VELOCITY);
-
-  // because the position is circular, we choose to correct for
-  // error by modifying the angular velocity, and so we only consider the
-  // partial derivative of energy with respect to velocity.
-  const energyDiff = currentEnergy - initialEnergy;
-  if (energyDiff > EPSILON) {
-    const velocityPartial = newAngularVelocity;
-    const adjustment = energyDiff / velocityPartial;
-    newAngularVelocity -= adjustment;
-  }
-
-  state.system.angularVelocity = newAngularVelocity;
-  state.system.theta = newTheta;
-
-  while (state.system.theta - Math.PI * 2 > 0) {
-    state.system.theta -= Math.PI * 2;
+  if (state.system.theta - Math.PI * 2 > 0) {
+    state.system.theta -=
+      Math.PI * 2 * Math.floor((state.system.theta / Math.PI) * 2);
   }
 }
 
@@ -164,7 +167,17 @@ const loop = (state: State, ctx: CanvasRenderingContext2D) => {
 };
 engine.nextFrame(loop);
 window.requestAnimationFrame(engine.run.bind(engine));
-const input = new Input("Gravity", "1", (e: Event) => {
-  engine.state.system.gravity = input.getValue();
+
+const gravityInput = new Input(
+  "Gravity",
+  String(INITIAL_GRAVITY),
+  (e: Event) => {
+    engine.state.system.gravity = gravityInput.getValue();
+  }
+);
+engine.state.system.gravity = gravityInput.getValue();
+
+const energyInput = new Input("Energy", String(INITIAL_ENERGY), (e: Event) => {
+  engine.state.system.energy = energyInput.getValue();
 });
-engine.state.system.gravity = input.getValue();
+engine.state.system.energy = energyInput.getValue();
