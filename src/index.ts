@@ -77,7 +77,7 @@ function getCenter(state: State) {
 function draw(state: State, ctx: CanvasRenderingContext2D) {
   const center = getCenter(state);
   const ballSize = 10;
-  const rodLength = 75;
+  const rodLength = 75 * state.system.length;
 
   const ballPosition = [
     Math.sin(state.system.theta) * (rodLength + ballSize) + center[0],
@@ -98,18 +98,28 @@ const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 2);
 const INITIAL_THETA = 0;
 const INITIAL_ENERGY = 0.23370055013616975;
 const INITIAL_GRAVITY = 1;
+const INITIAL_LENGTH = 1;
 const MASS = 1;
 const EPSILON = 1e-1;
 
-const kineticEnergy = (mass: number, angularVelocity: number) =>
-  (mass * angularVelocity ** 2) / 2;
-const potentialEnergy = (gravity: number, mass: number, theta: number) =>
-  -gravity * mass * Math.cos(theta);
+const kineticEnergy = (mass: number, length: number, angularVelocity: number) =>
+  (mass * length * angularVelocity ** 2) / 2;
+const potentialEnergy = (
+  gravity: number,
+  mass: number,
+  length: number,
+  theta: number
+) => -gravity * mass * length * Math.cos(theta);
 
 function getCurrentEnergy(state: State) {
   return (
-    kineticEnergy(MASS, state.system.angularVelocity) +
-    potentialEnergy(state.system.gravity, MASS, state.system.theta)
+    kineticEnergy(MASS, state.system.length, state.system.angularVelocity) +
+    potentialEnergy(
+      state.system.gravity,
+      MASS,
+      state.system.length,
+      state.system.theta
+    )
   );
 }
 
@@ -120,12 +130,11 @@ function correctEnergy(state: State) {
   // so we only consider the partial derivative with respect to angular velocity
   const energyDifference = currentEnergy - state.system.energy;
   if (Math.abs(energyDifference) > EPSILON) {
-    const velocityPartial = state.system.angularVelocity;
+    const velocityPartial = state.system.length * state.system.angularVelocity;
     const adjustment = Math.abs(energyDifference / velocityPartial);
     const energySign = energyDifference > 0 ? -1 : 1;
     const velocitySign = state.system.angularVelocity > 0 ? 1 : -1;
     state.system.angularVelocity += energySign * velocitySign * adjustment;
-    const newEnergy = getCurrentEnergy(state);
   }
 }
 
@@ -176,10 +185,18 @@ const gravityInput = new Input(
   }
 );
 
+const lengthInput = new Input("Length", String(INITIAL_LENGTH), (e?: Event) => {
+  engine.state.system.length = lengthInput.getValue();
+  engine.state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
+  engine.state.system.theta = INITIAL_THETA;
+  energyInput.setValue(getCurrentEnergy(engine.state));
+});
+
 engine.state.system.energy = energyInput.getValue();
 engine.state.system.gravity = gravityInput.getValue();
 engine.state.system.theta = INITIAL_THETA;
 engine.state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
+engine.state.system.length = INITIAL_LENGTH;
 
 const loop = (state: State, ctx: CanvasRenderingContext2D) => {
   update(state);
