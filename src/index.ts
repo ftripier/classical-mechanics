@@ -1,3 +1,5 @@
+import Input from "./input";
+
 interface Map<T> {
   [key: string]: T;
 }
@@ -100,7 +102,7 @@ const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 128);
 const INITIAL_THETA = 0;
 
 function evolveSystem(state: State, dt: number) {
-  const gravity = 0.001;
+  const gravity = state.system.gravity;
   const mass = 1;
   const gravitationalAcceleration = -gravity * Math.sin(state.system.theta);
 
@@ -160,3 +162,7 @@ const loop = (state: State, ctx: CanvasRenderingContext2D) => {
 };
 engine.nextFrame(loop);
 window.requestAnimationFrame(engine.run.bind(engine));
+const input = new Input("Gravity", "0.001", (e: Event) => {
+  engine.state.system.gravity = input.getValue();
+});
+engine.state.system.gravity = input.getValue();

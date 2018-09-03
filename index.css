@@ -1,7 +1,32 @@
 body {
   margin:0;
   padding:0;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  color: #444444;
+  font-weight: 400;
 }
 
 html, body { width:100%; height:100%; }
 canvas { display:block; }
+
+.system-input input {
+  font: unset;
+  font-size:14pt;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  color: #444444;
+  font-weight: 400;
+}
+
+.system-input label {
+  margin-right: 12px;
+}
+
+.system-input {
+  padding: 12px;
+}
+
+.input-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
