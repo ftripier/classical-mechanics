@@ -12,6 +12,7 @@
   },
   "main": "src/index.ts",
   "scripts": {
-    "dev": "tsc -w"
+    "dev": "tsc -w",
+    "build": "tsc"
   }
 }
