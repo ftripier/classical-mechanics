@@ -139,7 +139,6 @@ function evolveSystem(state: State, dt: number) {
   correctEnergy(state);
 
   // to prevent floating point overflow, we clamp theta between [0, PI*2]
-
   if (Math.abs(state.system.theta) > Math.PI * 2) {
     const sign = state.system.theta > 0 ? -1 : 1;
     state.system.theta +=
@@ -148,13 +147,6 @@ function evolveSystem(state: State, dt: number) {
 }
 
 function update(state: State) {
-  if (state.system.theta == null) {
-    state.system.theta = INITIAL_THETA;
-  }
-  if (state.system.angularVelocity == null) {
-    state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
-  }
-
   let dt = state.dt;
   while (dt > 0) {
     const expectedFrameTime = 16 + 2 / 3;
@@ -167,6 +159,26 @@ function update(state: State) {
 const canvas = <HTMLCanvasElement>document.getElementById("canvas");
 const engine = new Engine(canvas);
 
+const energyInput = new Input("Energy", String(INITIAL_ENERGY), (e?: Event) => {
+  engine.state.system.energy = energyInput.getValue();
+});
+
+const gravityInput = new Input(
+  "Gravity",
+  String(INITIAL_GRAVITY),
+  (e?: Event) => {
+    engine.state.system.gravity = gravityInput.getValue();
+    engine.state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
+    engine.state.system.theta = INITIAL_THETA;
+    energyInput.setValue(getCurrentEnergy(engine.state));
+  }
+);
+
+engine.state.system.energy = energyInput.getValue();
+engine.state.system.gravity = gravityInput.getValue();
+engine.state.system.theta = INITIAL_THETA;
+engine.state.system.angularVelocity = INITIAL_ANGULAR_VELOCITY;
+
 const loop = (state: State, ctx: CanvasRenderingContext2D) => {
   update(state);
   draw(state, ctx);
@@ -174,18 +186,3 @@ const loop = (state: State, ctx: CanvasRenderingContext2D) => {
 };
 engine.nextFrame(loop);
 window.requestAnimationFrame(engine.run.bind(engine));
-
-const energyInput = new Input("Energy", String(INITIAL_ENERGY), (e?: Event) => {
-  engine.state.system.energy = energyInput.getValue();
-});
-engine.state.system.energy = energyInput.getValue();
-
-const gravityInput = new Input(
-  "Gravity",
-  String(INITIAL_GRAVITY),
-  (e?: Event) => {
-    engine.state.system.gravity = gravityInput.getValue();
-    energyInput.setValue(getCurrentEnergy(engine.state));
-  }
-);
-engine.state.system.gravity = gravityInput.getValue();
