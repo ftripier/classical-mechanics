@@ -15,6 +15,9 @@ canvas { display:block; }
   font-family: 'Helvetica', 'Arial', sans-serif;
   color: #444444;
   font-weight: 400;
+  padding-left: 6px;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .system-input label {
