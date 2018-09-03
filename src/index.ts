@@ -99,7 +99,7 @@ const INITIAL_THETA = 0;
 const INITIAL_ENERGY = 0.23370055013616975;
 const INITIAL_GRAVITY = 1;
 const MASS = 1;
-const EPSILON = 1e-4;
+const EPSILON = 1e-1;
 
 const kineticEnergy = (mass: number, angularVelocity: number) =>
   (mass * angularVelocity ** 2) / 2;
@@ -122,8 +122,9 @@ function correctEnergy(state: State) {
   if (Math.abs(energyDifference) > EPSILON) {
     const velocityPartial = state.system.angularVelocity;
     const adjustment = Math.abs(energyDifference / velocityPartial);
-    const sign = state.system.angularVelocity > 0 ? -1 : 1;
-    state.system.angularVelocity += sign * adjustment;
+    const energySign = energyDifference > 0 ? -1 : 1;
+    const velocitySign = state.system.angularVelocity > 0 ? 1 : -1;
+    state.system.angularVelocity += energySign * velocitySign * adjustment;
   }
 }
 
