@@ -70,10 +70,6 @@ class Engine {
   }
 }
 
-const canvas = <HTMLCanvasElement>document.getElementById("canvas");
-const engine = new Engine(canvas);
-const EPSILON = 1e-4;
-
 function getCenter(state: State) {
   return [state.width >> 1, state.height >> 1];
 }
@@ -102,18 +98,23 @@ const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 2);
 const INITIAL_THETA = 0;
 const INITIAL_ENERGY = 0.23370055013616975;
 const INITIAL_GRAVITY = 1;
+const MASS = 1;
+const EPSILON = 1e-4;
+
+const kineticEnergy = (mass: number, angularVelocity: number) =>
+  (mass * angularVelocity ** 2) / 2;
+const potentialEnergy = (gravity: number, mass: number, theta: number) =>
+  -gravity * mass * Math.cos(theta);
+
+function getCurrentEnergy(state: State) {
+  return (
+    kineticEnergy(MASS, state.system.angularVelocity) +
+    potentialEnergy(state.system.gravity, MASS, state.system.theta)
+  );
+}
 
 function correctEnergy(state: State) {
-  const gravity = state.system.gravity;
-  const mass = 1;
-
-  const kineticEnergy = (mass: number, angularVelocity: number) =>
-    (mass * angularVelocity ** 2) / 2;
-  const potentialEnergy = (gravity: number, mass: number, theta: number) =>
-    -gravity * mass * Math.cos(theta);
-  const currentEnergy =
-    kineticEnergy(mass, state.system.angularVelocity) +
-    potentialEnergy(gravity, mass, state.system.theta);
+  const currentEnergy = getCurrentEnergy(state);
 
   // the only degree of freedom in the hamiltonian is the angular velocity
   // so we only consider the partial derivative with respect to angular velocity
@@ -137,9 +138,12 @@ function evolveSystem(state: State, dt: number) {
   // system unless we correct for it
   correctEnergy(state);
 
-  if (state.system.theta - Math.PI * 2 > 0) {
-    state.system.theta -=
-      Math.PI * 2 * Math.floor((state.system.theta / Math.PI) * 2);
+  // to prevent floating point overflow, we clamp theta between [0, PI*2]
+
+  if (Math.abs(state.system.theta) > Math.PI * 2) {
+    const sign = state.system.theta > 0 ? -1 : 1;
+    state.system.theta +=
+      sign * Math.PI * 2 * Math.floor((state.system.theta / Math.PI) * 2);
   }
 }
 
@@ -154,11 +158,14 @@ function update(state: State) {
   let dt = state.dt;
   while (dt > 0) {
     const expectedFrameTime = 16 + 2 / 3;
-    const normalizedDt = Math.max(dt, expectedFrameTime);
+    const normalizedDt = Math.min(dt, expectedFrameTime);
     evolveSystem(state, normalizedDt);
     dt -= expectedFrameTime;
   }
 }
+
+const canvas = <HTMLCanvasElement>document.getElementById("canvas");
+const engine = new Engine(canvas);
 
 const loop = (state: State, ctx: CanvasRenderingContext2D) => {
   update(state);
@@ -168,16 +175,17 @@ const loop = (state: State, ctx: CanvasRenderingContext2D) => {
 engine.nextFrame(loop);
 window.requestAnimationFrame(engine.run.bind(engine));
 
-const gravityInput = new Input(
-  "Gravity",
-  String(INITIAL_GRAVITY),
-  (e: Event) => {
-    engine.state.system.gravity = gravityInput.getValue();
-  }
-);
-engine.state.system.gravity = gravityInput.getValue();
-
-const energyInput = new Input("Energy", String(INITIAL_ENERGY), (e: Event) => {
+const energyInput = new Input("Energy", String(INITIAL_ENERGY), (e?: Event) => {
   engine.state.system.energy = energyInput.getValue();
 });
 engine.state.system.energy = energyInput.getValue();
+
+const gravityInput = new Input(
+  "Gravity",
+  String(INITIAL_GRAVITY),
+  (e?: Event) => {
+    engine.state.system.gravity = gravityInput.getValue();
+    energyInput.setValue(getCurrentEnergy(engine.state));
+  }
+);
+engine.state.system.gravity = gravityInput.getValue();

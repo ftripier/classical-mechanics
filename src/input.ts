@@ -1,6 +1,7 @@
 export default class Input {
   element: HTMLInputElement;
-  constructor(name = "", value = "", onchange = (e: Event) => {}) {
+  onchange: (e?: Event) => void;
+  constructor(name = "", value = "", onchange = (e?: Event) => {}) {
     let inputArea = document.querySelector(".input-area");
     if (!inputArea) {
       inputArea = document.createElement("div");
@@ -20,10 +21,16 @@ export default class Input {
     container.appendChild(docfrag);
     inputArea.appendChild(container);
 
+    this.onchange = onchange;
     this.element = docfrag;
   }
 
   getValue() {
     return this.element.value;
+  }
+
+  setValue(value: any) {
+    this.element.value = String(value);
+    this.onchange();
   }
 }
