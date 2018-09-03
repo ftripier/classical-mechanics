@@ -125,6 +125,7 @@ function correctEnergy(state: State) {
     const energySign = energyDifference > 0 ? -1 : 1;
     const velocitySign = state.system.angularVelocity > 0 ? 1 : -1;
     state.system.angularVelocity += energySign * velocitySign * adjustment;
+    const newEnergy = getCurrentEnergy(state);
   }
 }
 
@@ -143,7 +144,7 @@ function evolveSystem(state: State, dt: number) {
   if (Math.abs(state.system.theta) > Math.PI * 2) {
     const sign = state.system.theta > 0 ? -1 : 1;
     state.system.theta +=
-      sign * Math.PI * 2 * Math.floor((state.system.theta / Math.PI) * 2);
+      sign * Math.PI * 2 * Math.floor(state.system.theta / (Math.PI * 2));
   }
 }
 
