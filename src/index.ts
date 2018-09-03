@@ -98,7 +98,7 @@ function draw(state: State, ctx: CanvasRenderingContext2D) {
   ctx.stroke();
 }
 
-const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 128);
+const INITIAL_ANGULAR_VELOCITY = Math.PI * (1 / 2);
 const INITIAL_THETA = 0;
 
 function evolveSystem(state: State, dt: number) {
@@ -108,8 +108,9 @@ function evolveSystem(state: State, dt: number) {
 
   const oldTheta = state.system.theta;
   const oldAngularVelocity = state.system.angularVelocity;
-  let newTheta = oldTheta + oldAngularVelocity * dt;
-  let newAngularVelocity = oldAngularVelocity + gravitationalAcceleration * dt;
+  let newTheta = oldTheta + oldAngularVelocity * (dt / 1000);
+  let newAngularVelocity =
+    oldAngularVelocity + gravitationalAcceleration * (dt / 1000);
 
   // because of floating point error, the energy of the system rises over time.
   // This corrects for these errors.
@@ -117,6 +118,7 @@ function evolveSystem(state: State, dt: number) {
     -gravity * mass * Math.cos(theta);
   const kineticEnergy = (mass: number, angularVelocity: number) =>
     (mass * angularVelocity ** 2) / 2;
+
   const currentEnergy = kineticEnergy(mass, newAngularVelocity);
   const initialEnergy = kineticEnergy(mass, INITIAL_ANGULAR_VELOCITY);
 
@@ -149,7 +151,7 @@ function update(state: State) {
   let dt = state.dt;
   while (dt > 0) {
     const expectedFrameTime = 16 + 2 / 3;
-    const normalizedDt = Math.max(dt, expectedFrameTime) / expectedFrameTime;
+    const normalizedDt = Math.max(dt, expectedFrameTime);
     evolveSystem(state, normalizedDt);
     dt -= expectedFrameTime;
   }
@@ -162,7 +164,7 @@ const loop = (state: State, ctx: CanvasRenderingContext2D) => {
 };
 engine.nextFrame(loop);
 window.requestAnimationFrame(engine.run.bind(engine));
-const input = new Input("Gravity", "0.001", (e: Event) => {
+const input = new Input("Gravity", "1", (e: Event) => {
   engine.state.system.gravity = input.getValue();
 });
 engine.state.system.gravity = input.getValue();
